@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Vehicle {
+  id           String              @id @default(uuid())
+  make         String              // e.g. Chevrolet, Kia, Hyundai, BYD, Toyota
+  model        String              // e.g. Cobalt, Gentra, Nexia 3, Tracker 2, Onix, Damas
+  generation   String?             // e.g. II avlod, Restyling
+  yearFrom     Int                 // e.g. 2013
+  yearTo       Int?                // e.g. 2024 (null if in production)
+  engine       String              // e.g. 1.5 DOHC B15D2, 1.2 Turbo
+  fuelType     String              // e.g. Benzin, Benzin/Metan, Gibrid
+  transmission String              // e.g. Avtomat (AT), Mexanika (MT)
+  bodyType     String              // e.g. Sedan, Krossover, Mikroven
+  imageUrl     String?
+  vinPattern   String?             // e.g. XWBJA52E, KL1JF69
+  compatibilities PartCompatibility[]
+
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+model Category {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String?
+  icon        String?    // Lucide icon name, e.g. "Cog", "Disc", "Battery", "Fuel"
+  parentId    String?
+  parent      Category?  @relation("SubCategories", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Category[] @relation("SubCategories")
+  parts       Part[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Part {
+  id             String              @id @default(uuid())
+  name           String              // Masalan: "Old tormoz kolodkalari to'plami"
+  slug           String              @unique
+  oemNumber      String              // Masalan: "GM 96405129"
+  brand          String              // Masalan: "GM Genuine Parts", "Bosch", "Brembo", "CTR"
+  country        String              // Masalan: "Koreya", "Germaniya", "O'zbekiston"
+  isOriginal     Boolean             @default(true)
+  price          Int                 // So'mda, masalan: 280000
+  oldPrice       Int?                // Masalan: 320000
+  stock          Int                 @default(10)
+  unit           String              @default("dona")
+  warranty       String?             // e.g. "12 oy yoki 20 000 km"
+  description    String
+  specifications String              // JSON formatida: { "O'lcham": "...", "O'rnatilish joyi": "Old o'q" }
+  images         String              // JSON formatida rasmlar massivi
+  rating         Float               @default(4.8)
+  reviewCount    Int                 @default(0)
+  badge          String?             // "Top sotuv", "Aksiya", "Yangi"
+  crossCodes     String?             // Vergul bilan: "SP1159, 0986424789, D11158M"
+  
+  categoryId     String
+  category       Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  compatibility  PartCompatibility[]
+  orderItems     OrderItem[]
+  reviews        Review[]
+
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+model PartCompatibility {
+  id        String   @id @default(uuid())
+  partId    String
+  vehicleId String
+  notes     String?  // Masalan: "Faqat 1.5 motorlar uchun", "Old chap/o'ng"
+
+  part      Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@unique([partId, vehicleId])
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  orderNumber     String      @unique // e.g. AQ-2026-9481
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  region          String      // e.g. Toshkent shahri, Samarqand viloyati
+  cityAddress     String      // e.g. Chilonzor tumani, 9-mavze, 14-uy
+  deliveryMethod  String      // "courier_fast", "standard_bts", "pickup"
+  deliveryCost    Int         @default(0)
+  paymentMethod   String      // "click", "payme", "uzumbank", "cash_on_delivery"
+  paymentStatus   String      @default("pending") // "pending", "paid", "refunded"
+  status          String      @default("new")     // "new", "confirmed", "processing", "shipped", "delivered", "cancelled"
+  totalAmount     Int
+  notes           String?
+  trackingCode    String?
+
+  items           OrderItem[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  partId    String
+  quantity  Int      @default(1)
+  price     Int      // Sotib olingan paytdagi narx
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  part      Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  partId     String
+  authorName String
+  carModel   String?
+  rating     Int      @default(5)
+  comment    String
+
+  part       Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+}
