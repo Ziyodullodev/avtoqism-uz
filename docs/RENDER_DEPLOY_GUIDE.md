@@ -52,7 +52,10 @@ Render.com da loyihani **2 xil qulay usulda** ishga tushirish mumkin:
 6. **Environment Variables** (Muhit o‘zgaruvchilari) bo‘limida:
    - `PORT` = `10000`
    - `NODE_ENV` = `production`
-   - `DATABASE_URL` = `file:/app/prisma/dev.db`
+   - `DATABASE_URL` = `postgresql://...` (Neon dan olingan havola)
+   - `ADMIN_USERNAME` = `admin` (yoki xohlagan loginingiz)
+   - `ADMIN_PASSWORD` = `admin123` (yoki o‘zingizning maxfiy kuchli parolingiz)
+   - `ADMIN_SECRET_KEY` = `ixtiyoriy_uzun_maxfiy_kalit`
 7. Sahifaning pastidagi **"Create Web Service"** tugmasini bosing!
 
 Render avtomatik ravishda Docker tasvirini yig‘adi (build qiladi), bazani to‘ldiradi va sizga `https://avtoqism-uz.onrender.com` kabi bepul SSL (HTTPS) domen taqdim etadi.

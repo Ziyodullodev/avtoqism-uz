@@ -19,10 +19,26 @@ import {
   RefreshCw,
   ExternalLink,
   ShieldCheck,
+  Lock,
+  User,
+  LogOut,
+  Eye,
+  EyeOff,
+  ArrowRight,
 } from 'lucide-react';
 import { Part, Order, Category, Vehicle } from '@/lib/types';
 
 export default function AdminPage() {
+  // Auth states
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentAdminUser, setCurrentAdminUser] = useState('admin');
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+
   const [activeTab, setActiveTab] = useState<'orders' | 'parts' | 'vehicles'>('orders');
 
   // Data states
@@ -52,6 +68,69 @@ export default function AdminPage() {
   const [newPartVehicleIds, setNewPartVehicleIds] = useState<string[]>([]);
   const [savingPart, setSavingPart] = useState(false);
 
+  // Check auth on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        if (data.authenticated) {
+          setIsAuthenticated(true);
+          setCurrentAdminUser(data.username || 'admin');
+          loadData();
+        } else {
+          setIsAuthenticated(false);
+          setLoading(false);
+        }
+      } catch {
+        setIsAuthenticated(false);
+        setLoading(false);
+      } finally {
+        setAuthChecked(true);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    setLoginError('');
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: loginUsername.trim(),
+          password: loginPassword.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setIsAuthenticated(true);
+        setCurrentAdminUser(loginUsername.trim());
+        setLoginPassword('');
+        loadData();
+      } else {
+        setLoginError(data.error || 'Login yoki parol xato');
+      }
+    } catch (err) {
+      console.error(err);
+      setLoginError('Server bilan aloqa xatoligi');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setIsAuthenticated(false);
+    setLoginPassword('');
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -77,10 +156,6 @@ export default function AdminPage() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   // Update order status
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -194,6 +269,108 @@ export default function AdminPage() {
       )
     : parts;
 
+  // 1. Loading state
+  if (!authChecked) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-3">
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-slate-500 font-medium">Administrator xavfsizlik tizimi tekshirilmoqda...</p>
+      </div>
+    );
+  }
+
+  // 2. Login screen if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-[75vh] flex items-center justify-center px-4 py-12">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-md w-full p-8 space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-700 to-blue-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-blue-500/20">
+              <Lock className="w-7 h-7" />
+            </div>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              Administrator tizimi
+            </h1>
+            <p className="text-xs text-slate-500">
+              AvtoQism.uz do‘konini boshqarish uchun login va parolni kiriting
+            </p>
+          </div>
+
+          {loginError && (
+            <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-4 text-xs">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1.5 uppercase tracking-wider text-[11px]">
+                Login (Foydalanuvchi nomi)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  placeholder="admin"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1.5 uppercase tracking-wider text-[11px]">
+                Maxfiy Parol
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="p-1 text-slate-400 hover:text-slate-600 absolute right-3 top-1/2 -translate-y-1/2"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loginLoading}
+              className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
+            >
+              {loginLoading ? 'Tekshirilmoqda...' : 'Tizimga kirish'}
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </form>
+
+          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500 space-y-1.5">
+            <div className="font-semibold text-slate-700 flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> Standart kirish ma‘lumotlari:
+            </div>
+            <div>Login: <code className="bg-white px-1.5 py-0.5 rounded border font-bold text-slate-800">admin</code></div>
+            <div>Parol: <code className="bg-white px-1.5 py-0.5 rounded border font-bold text-slate-800">admin123</code></div>
+            <div className="text-[10px] text-slate-400 mt-1 italic">
+              (Parolni .env yoki Render Environment Variables da ADMIN_PASSWORD orqali o‘zgartirishingiz mumkin)
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Authenticated Admin Dashboard
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
       {/* Header */}
@@ -207,7 +384,12 @@ export default function AdminPage() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+            <User className="w-3.5 h-3.5 text-blue-600" />
+            <span>Admin: {currentAdminUser}</span>
+          </div>
+
           <button
             onClick={loadData}
             className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors"
@@ -215,11 +397,21 @@ export default function AdminPage() {
           >
             <RefreshCw className="w-4 h-4" />
           </button>
+
           <button
             onClick={() => setShowAddPartModal(true)}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center gap-1.5 transition-colors"
           >
-            <Plus className="w-4 h-4" /> Yangi ehtiyot qism qo‘shish
+            <Plus className="w-4 h-4" /> Yangi ehtiyot qism
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-xl border border-red-200 flex items-center gap-1.5 transition-colors"
+            title="Tizimdan chiqish"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Chiqish</span>
           </button>
         </div>
       </div>
