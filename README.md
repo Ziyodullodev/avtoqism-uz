@@ -103,6 +103,28 @@ Administrator paneli: **[http://localhost:3000/admin](http://localhost:3000/admi
 
 ---
 
+## 🐳 Docker va Render.com orqali deploy qilish
+
+Loyihani Docker orqali mahalliy yoki Render.com bulutli serverida ishga tushirish uchun barcha konfiguratsiyalar to‘liq tayyorlangan:
+- `Dockerfile` — Ko‘p bosqichli, optimallashtirilgan Next.js standalone va SQLite Docker tasviri.
+- `docker-compose.yml` — Lokal kompyuterda 1 ta buyruq bilan konteynerni ishga tushirish.
+- `render.yaml` — Render.com Blueprint avtomatik sozlash fayli.
+- Batafsil deploy ko‘rsatmalari: [docs/RENDER_DEPLOY_GUIDE.md](docs/RENDER_DEPLOY_GUIDE.md)
+
+### Lokal Docker orqali ishga tushirish:
+```bash
+docker compose up --build
+```
+Brauzerda: `http://localhost:3000`
+
+### Render.com ga yuklash:
+1. Loyihani GitHub repozitoriyangizga push qiling (`git push origin master`).
+2. [Render.com](https://render.com) da **"New +" -> "Web Service"** ni tanlang va repozitoriyangizni ulang.
+3. Runtime sifatida **"Docker"** ni tanlang (Render avtomatik `Dockerfile`ni aniqlaydi).
+4. **"Create Web Service"** tugmasini bosing! Bir necha daqiqada bepul HTTPS havola bilan loyihangiz internetda ishga tushadi.
+
+---
+
 ## 🗄️ Ma’lumotlar bazasi modeli (Database ER Model)
 
 - `Vehicle`: Avtomobil rusumi (make), modeli (model), yillari (yearFrom, yearTo), motor (engine), yoqilg‘i turi, VIN shabloni.

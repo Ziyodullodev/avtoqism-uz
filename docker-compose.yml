@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: avtoqism-uz:latest
+    container_name: avtoqism_app
+    restart: unless-stopped
+    ports:
+      - '3000:10000'
+    environment:
+      - NODE_ENV=production
+      - PORT=10000
+      - HOSTNAME=0.0.0.0
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+    volumes:
+      # Optional: persist database on host if desired
+      - avtoqism_data:/app/prisma
+
+volumes:
+  avtoqism_data:

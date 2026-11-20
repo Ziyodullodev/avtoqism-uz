@@ -6,10 +6,13 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "next start -p 3000",
+    "start": "next start",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "seed": "node prisma/seed.mjs"
+    "seed": "node prisma/seed.mjs",
+    "render:build": "prisma db push && node prisma/seed.mjs && next build",
+    "render:start": "next start"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",

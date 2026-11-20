@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: avtoqism-uz
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: master
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: file:/app/prisma/dev.db
+      - key: NEXT_PUBLIC_APP_URL
+        fromService:
+          type: web
+          name: avtoqism-uz
+          property: host
+    healthCheckPath: /
+    autoDeploy: true
