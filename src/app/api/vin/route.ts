@@ -29,17 +29,17 @@ export async function POST(request: NextRequest) {
     if (decoded.matchedVehiclePattern) {
       matchedVehicle = await prisma.vehicle.findFirst({
         where: {
-          vinPattern: { contains: decoded.matchedVehiclePattern },
-        },
+          vinPattern: { contains: decoded.matchedVehiclePattern, mode: 'insensitive' },
+        } as any,
       });
     }
 
     if (!matchedVehicle) {
       matchedVehicle = await prisma.vehicle.findFirst({
         where: {
-          make: { equals: decoded.suggestedMake },
-          model: { contains: decoded.suggestedModel },
-        },
+          make: { equals: decoded.suggestedMake, mode: 'insensitive' },
+          model: { contains: decoded.suggestedModel, mode: 'insensitive' },
+        } as any,
       });
     }
 
@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
     if (!matchedVehicle) {
       matchedVehicle = await prisma.vehicle.findFirst({
         where: {
-          make: { equals: decoded.suggestedMake },
-        },
+          make: { equals: decoded.suggestedMake, mode: 'insensitive' },
+        } as any,
       });
     }
 

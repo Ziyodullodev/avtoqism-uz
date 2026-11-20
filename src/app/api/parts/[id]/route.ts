@@ -43,7 +43,7 @@ export async function GET(
             id: { not: part.id },
             categoryId: part.categoryId,
             OR: codeList.map((code) => ({
-              crossCodes: { contains: code },
+              crossCodes: { contains: code, mode: 'insensitive' },
             })),
           },
           take: 4,
